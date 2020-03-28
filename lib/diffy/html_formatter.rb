@@ -4,6 +4,8 @@ module Diffy
     def initialize(diff, options = {})
       @diff = diff
       @options = options
+      @old_line_num = 0
+      @new_line_num = 0
     end
 
     def to_s
@@ -15,19 +17,24 @@ module Diffy
     end
 
     private
+
     def wrap_line(line)
       cleaned = clean_line(line)
       case line
       when /^(---|\+\+\+|\\\\)/
-        '    <li class="diff-comment"><span>' + line.chomp + '</span></li>'
+        "    <tr class=\"diff-comment\"><td class=\"gutter-old\"></td><td class=\"gutter-new\"></td><td class=\"line\">#{line.chomp}</td></tr>"
       when /^\+/
-        '    <li class="ins"><ins>' + cleaned + '</ins></li>'
+        @new_line_num += 1
+        "    <tr class=\"ins\"><td class=\"gutter-old\"></td><td class=\"gutter-new\">#{@new_line_num}</td><td class=\"line\">#{cleaned}</td></tr>"
       when /^-/
-        '    <li class="del"><del>' + cleaned + '</del></li>'
+        @old_line_num += 1
+        "    <tr class=\"del\"><td class=\"gutter-old\">#{@old_line_num}</td><td class=\"gutter-new\"></td><td class=\"line\">#{cleaned}</td></tr>"
       when /^ /
-        '    <li class="unchanged"><span>' + cleaned + '</span></li>'
+        @old_line_num += 1
+        @new_line_num += 1
+        "    <tr class=\"unchanged\"><td class=\"gutter-old\">#{@old_line_num}</td><td class=\"gutter-new\">#{@new_line_num}</td><td class=\"line\">#{cleaned}</td></tr>"
       when /^@@/
-        '    <li class="diff-block-info"><span>' + line.chomp + '</span></li>'
+        "    <tr class=\"diff-block-info\"><td class=\"gutter-old\"></td><td class=\"gutter-new\"></td><td class=\"line\">#{line.chomp}</td></tr>"
       end
     end
 
@@ -44,7 +51,7 @@ module Diffy
       if lines.empty?
         %'<div class="diff"></div>'
       else
-        %'<div class="diff">\n  <ul>\n#{lines.join("\n")}\n  </ul>\n</div>\n'
+        %'<div class="diff" data-old-gutter="#{@old_line_num.to_s.length}" data-new-gutter="#{@new_line_num.to_s.length}">\n  <table>\n#{lines.join("\n")}\n  </table>\n</div>\n'
       end
     end
 
